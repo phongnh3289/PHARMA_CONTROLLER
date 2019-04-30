@@ -1,0 +1,11 @@
+bo_thuoc_hiep\stm32f10x_i2c.o: ..\STM32F10x_StdPeriph_Driver\src\stm32f10x_i2c.c
+bo_thuoc_hiep\stm32f10x_i2c.o: ../Inc/stm32f10x_i2c.h
+bo_thuoc_hiep\stm32f10x_i2c.o: C:\Keil_v5\ARM\PACK\Keil\STM32F1xx_DFP\2.3.0\Device\Include\stm32f10x.h
+bo_thuoc_hiep\stm32f10x_i2c.o: .\RTE\_BO_THUOC_HIEP\RTE_Components.h
+bo_thuoc_hiep\stm32f10x_i2c.o: ../Drivers/CMSIS/Include/core_cm3.h
+bo_thuoc_hiep\stm32f10x_i2c.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+bo_thuoc_hiep\stm32f10x_i2c.o: ../Drivers/CMSIS/Include/core_cmInstr.h
+bo_thuoc_hiep\stm32f10x_i2c.o: ../Drivers/CMSIS/Include/cmsis_armcc.h
+bo_thuoc_hiep\stm32f10x_i2c.o: ../Drivers/CMSIS/Include/core_cmFunc.h
+bo_thuoc_hiep\stm32f10x_i2c.o: C:\Keil_v5\ARM\PACK\Keil\STM32F1xx_DFP\2.3.0\Device\Include\system_stm32f10x.h
+bo_thuoc_hiep\stm32f10x_i2c.o: ../Inc/stm32f10x_rcc.h
