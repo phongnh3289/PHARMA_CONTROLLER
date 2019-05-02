@@ -500,7 +500,7 @@ ork --depend=bo_thuoc_hiep\startup_stm32f103xb.d -obo_thuoc_hiep\startup_stm32f
 103xb.o -I..\\Inc -I.\RTE\_BO_THUOC_HIEP -IC:\Keil_v5\ARM\PACK\ARM\CMSIS\5.4.0\
 CMSIS\Core\Include -IC:\Keil_v5\ARM\PACK\Keil\STM32F1xx_DFP\2.3.0\Device\Includ
 e --predefine="__MICROLIB SETA 1" --predefine="__UVISION_VERSION SETA 526" --pr
-edefine="_RTE_ SETA 1" --predefine="STM32F10X_LD SETA 1" --list=startup_stm32f1
+edefine="_RTE_ SETA 1" --predefine="STM32F10X_MD SETA 1" --list=startup_stm32f1
 03xb.lst startup_stm32f103xb.s
 
 
