@@ -3,14 +3,15 @@
 #include "cmsis_os.h"
 
 I2C_HandleTypeDef hi2c1;
+
 TIM_HandleTypeDef htim2;
+
 UART_HandleTypeDef huart1;
 
 osThreadId main_isrHandle;
 osThreadId setup_isrHandle;
 osThreadId reserve_isrHandle;
 /* Private function prototypes -----------------------------------------------*/
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim);
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART1_UART_Init(void);
@@ -20,10 +21,14 @@ void start_main_isr(void const * argument);
 void start_setup_isr(void const * argument);
 void start_reserve_isr(void const * argument);
 void ScreenUpdate(void);
-
+void PrintNumber(uint16_t number);
 #define SS_DIGIT				4
+// 7 segment font (0-9)
+// D7=DP, D6=A, D5=B, D4=C, D3=D, D2=E, D1=F, D0=G
 const uint8_t font[10] ={0x7E, 0x30, 0x6D, 0x79, 0x33, 0x5B, 0x5F, 0x70, 0x7F, 0x7B};
-uint8_t buffer[8]={1,2,3,4,5,6,7,8};
+uint8_t buffer[8]={0,2,5,7,5,6,7,8};
+volatile uint16_t data_number=1234;
+volatile int8_t BT_1=1, BT_2=1;
 /* Private function prototypes -----------------------------------------------*/
 #ifdef __GNUC__
   /* With GCC/RAISONANCE, small printf (option LD Linker->Libraries->Small printf
@@ -39,7 +44,7 @@ uint8_t buffer[8]={1,2,3,4,5,6,7,8};
   return ch;
 }
 int main(void)
- {
+{
   HAL_Init();
   SystemClock_Config();
   /* Initialize all configured peripherals */
@@ -51,9 +56,11 @@ int main(void)
   /* definition and creation of main_isr */
   osThreadDef(main_isr, start_main_isr, osPriorityNormal, 0, 128);
   main_isrHandle = osThreadCreate(osThread(main_isr), NULL);
+
   /* definition and creation of setup_isr */
   osThreadDef(setup_isr, start_setup_isr, osPriorityIdle, 0, 128);
   setup_isrHandle = osThreadCreate(osThread(setup_isr), NULL);
+
   /* definition and creation of reserve_isr */
   osThreadDef(reserve_isr, start_reserve_isr, osPriorityIdle, 0, 128);
   reserve_isrHandle = osThreadCreate(osThread(reserve_isr), NULL);
@@ -66,12 +73,16 @@ void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+
+  /**Initializes the CPU, AHB and APB busses clocks 
+  */
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+  RCC_OscInitStruct.HSEPredivValue = RCC_HSE_PREDIV_DIV1;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI_DIV2;
-  RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL8;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+  RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL9;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
@@ -85,11 +96,17 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
   {
     Error_Handler();
   }
 }
+
+/**
+  * @brief I2C1 Initialization Function
+  * @param None
+  * @retval None
+  */
 static void MX_I2C1_Init(void)
 {
   hi2c1.Instance = I2C1;
@@ -106,7 +123,6 @@ static void MX_I2C1_Init(void)
     Error_Handler();
   }
 }
-
 static void MX_TIM2_Init(void)
 {
   TIM_ClockConfigTypeDef sClockSourceConfig = {0};
@@ -114,7 +130,7 @@ static void MX_TIM2_Init(void)
   htim2.Instance = TIM2;
   htim2.Init.Prescaler = 35999;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 800;
+  htim2.Init.Period = 10;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
@@ -133,6 +149,7 @@ static void MX_TIM2_Init(void)
     Error_Handler();
   }
 }
+
 static void MX_USART1_UART_Init(void)
 {
   huart1.Instance = USART1;
@@ -150,17 +167,30 @@ static void MX_USART1_UART_Init(void)
 }
 static void MX_GPIO_Init(void)
 {
-	GPIO_InitTypeDef GPIO_InitStruct;
+	GPIO_InitTypeDef GPIO_InitStructA;
+	GPIO_InitTypeDef GPIO_InitStructB;
+	GPIO_InitTypeDef GPIO_InitStructC;
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
-	GPIO_InitStruct.Pin = 0xffff;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+	__HAL_RCC_GPIOC_CLK_ENABLE();
+	//Port A
+	GPIO_InitStructA.Pin = 0x00ff;
+  GPIO_InitStructA.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStructA.Speed = GPIO_SPEED_FREQ_HIGH;
+	HAL_GPIO_Init(GPIOA, &GPIO_InitStructA);
+	//Port B
+	GPIO_InitStructB.Pin = 0xffff;
+  GPIO_InitStructB.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStructB.Speed = GPIO_SPEED_FREQ_HIGH;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStructB);
+	//Port C
+	GPIO_InitStructC.Pin = GPIO_PIN_0|GPIO_PIN_14;
+  GPIO_InitStructC.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStructC.Speed = GPIO_SPEED_FREQ_HIGH;
+	HAL_GPIO_Init(GPIOC, &GPIO_InitStructC);
 }
-
+/* USER CODE END Header_start_main_isr */
 void start_main_isr(void const * argument)
 {
 	printf("Device: drug product controller\r\n");
@@ -169,56 +199,87 @@ void start_main_isr(void const * argument)
 	printf("Designer: phongnh3289\r\n");
   for(;;)
   {
-    printf("log command: Hello\r\n");
-		 osDelay(1000);
+		printf("log command: Hello\r\n");
+		osDelay(1000);
   }
 }
+
 void start_setup_isr(void const * argument)
+{
+
+  for(;;)
+  {
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_SET);
+		osDelay(10);
+		if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_0)==0){
+			osDelay(10);
+			while(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_0)==0);
+			data_number=data_number+1;
+			//BT_1=0;
+		}
+		if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_14)==0){
+			osDelay(10);
+			while(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_14)==0);
+			//BT_2=0;
+			data_number=data_number-1;
+		}
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
+		//if(BT_1==0){BT_1=1;data_number++;}	
+		//if(BT_2==0){BT_2=1;data_number--;}				
+		PrintNumber(data_number);
+		//osDelay(200);
+  }
+}
+/* USER CODE END Header_start_reserve_isr */
+void start_reserve_isr(void const * argument)
 {
   for(;;)
   {
     osDelay(1);
   }
 }
-void start_reserve_isr(void const * argument)
-{
-  for(;;)
-  {
-    //HAL_Delay(2);
-		//ScreenUpdate();
-		osDelay(1);
-  }
-}
-void ScreenUpdate(void)
-{
-	static uint8_t digit = 0;
-	if(digit==0){HAL_GPIO_WritePin(GPIOB, GPIO_PIN_11, GPIO_PIN_RESET);HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);}
-	else if(digit==1){HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);HAL_GPIO_WritePin(GPIOB, GPIO_PIN_9, GPIO_PIN_SET);}
-	else if(digit==2){HAL_GPIO_WritePin(GPIOB, GPIO_PIN_9, GPIO_PIN_RESET);HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, GPIO_PIN_SET);}
-	else if(digit==3){HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, GPIO_PIN_RESET);HAL_GPIO_WritePin(GPIOB, GPIO_PIN_11, GPIO_PIN_SET);}
-	//else if(digit==4){HAL_GPIO_WritePin(GPIOB, GPIO_PIN_11, GPIO_PIN_RESET);HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET);}
-	//else if(digit==5){HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET);HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_SET);}
-	//else if(digit==6){HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);}
-	//else if(digit==7){HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET);HAL_GPIO_WritePin(GPIOB, GPIO_PIN_15, GPIO_PIN_SET);}
-	GPIOA->ODR = (~font[buffer[digit]]) & 0x00FF;	
-	digit++;
-	if (digit > (SS_DIGIT-1))digit = 0;
-}
+
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 	if (htim->Instance == TIM2) {
     //HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
 		ScreenUpdate();
   }
-  if (htim->Instance == TIM1) {
+	if (htim->Instance == TIM1) {
     HAL_IncTick();
   }
 }
 void Error_Handler(void)
 {
-
 }
-
+void PrintNumber(uint16_t number)
+{
+	// Check max and min
+	if (number > 9999)
+	{
+		number = 9999;
+	}	
+	// Convert integer to bcd digits
+	buffer[0] = number / 1000;
+	buffer[1] = number % 1000 / 100;
+	buffer[2] = number % 100 / 10;
+	buffer[3] = number % 10;
+}
+void ScreenUpdate(void)
+{
+	static uint8_t digit = 0;
+	if(digit==0){
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_11, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);	
+	}
+	else if(digit==1){HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);HAL_GPIO_WritePin(GPIOB, GPIO_PIN_9, GPIO_PIN_SET);}
+	else if(digit==2){HAL_GPIO_WritePin(GPIOB, GPIO_PIN_9, GPIO_PIN_RESET);HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, GPIO_PIN_SET);}
+	else if(digit==3){HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, GPIO_PIN_RESET);HAL_GPIO_WritePin(GPIOB, GPIO_PIN_11, GPIO_PIN_SET);}
+	if(digit==2)GPIOA->ODR = (font[buffer[digit]]|0x80) & 0x00FF;
+	else GPIOA->ODR = (font[buffer[digit]]) & 0x00FF;	
+	digit++;
+	if (digit > (SS_DIGIT-1))digit = 0;
+}
 #ifdef  USE_FULL_ASSERT
 /**
   * @brief  Reports the name of the source file and the source line number
