@@ -1,7 +1,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
-
+//#include "at24_hal_i2c.h"
 I2C_HandleTypeDef hi2c1;
 
 TIM_HandleTypeDef htim2;
@@ -12,6 +12,7 @@ osThreadId main_isrHandle;
 osThreadId setup_isrHandle;
 osThreadId reserve_isrHandle;
 /* Private function prototypes -----------------------------------------------*/
+void HAL_I2C1_MspInit(I2C_HandleTypeDef* i2cHandle);
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART1_UART_Init(void);
@@ -27,8 +28,14 @@ void PrintNumber(uint16_t number);
 // D7=DP, D6=A, D5=B, D4=C, D3=D, D2=E, D1=F, D0=G
 const uint8_t font[10] ={0x7E, 0x30, 0x6D, 0x79, 0x33, 0x5B, 0x5F, 0x70, 0x7F, 0x7B};
 uint8_t buffer[8]={0,2,5,7,5,6,7,8};
+unsigned char buf[5];  
 volatile uint16_t data_number=1234;
 volatile int8_t BT_1=1, BT_2=1;
+uint8_t buff_a[8]={0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08};
+uint8_t buff_b[8];
+#define		_EEPROM_SIZE_KBIT										32
+#define		_EEPROM24XX_I2C											hi2c1			
+#define		_EEPROM_FREERTOS_IS_ENABLE					0
 /* Private function prototypes -----------------------------------------------*/
 #ifdef __GNUC__
   /* With GCC/RAISONANCE, small printf (option LD Linker->Libraries->Small printf
@@ -43,6 +50,107 @@ volatile int8_t BT_1=1, BT_2=1;
 	HAL_UART_Transmit(&huart1, (uint8_t*)&ch,1,100);
   return ch;
 }
+int	EEPROM24XX_IsConnected(void)
+{
+	if(HAL_I2C_IsDeviceReady(&_EEPROM24XX_I2C,0xa0,1,100)==HAL_OK)
+		return 1;
+	else
+		return 0;	
+}
+//##########################################################################
+int		EEPROM24XX_Save(uint16_t Address,void *data,size_t size_of_data)
+{
+	#if ((_EEPROM_SIZE_KBIT==1) || (_EEPROM_SIZE_KBIT==2))
+	if(size_of_data > 8)
+		return false;
+	#endif
+	#if ((_EEPROM_SIZE_KBIT==4) || (_EEPROM_SIZE_KBIT==8) || (_EEPROM_SIZE_KBIT==16))
+	if(size_of_data > 16)
+		return false;
+	#endif
+	#if ((_EEPROM_SIZE_KBIT==32) || (_EEPROM_SIZE_KBIT==64) || (_EEPROM_SIZE_KBIT==128))
+	if(size_of_data > 32)
+		return 0;
+	#endif
+	
+	#if ((_EEPROM_SIZE_KBIT==1) || (_EEPROM_SIZE_KBIT==2))
+	if(HAL_I2C_Mem_Write(&_EEPROM24XX_I2C,0xa0,Address,I2C_MEMADD_SIZE_8BIT,(uint8_t*)data,size_of_data,100) == HAL_OK)
+	#else
+	if(HAL_I2C_Mem_Write(&_EEPROM24XX_I2C,0xa0,Address,I2C_MEMADD_SIZE_16BIT,(uint8_t*)data,size_of_data,100) == HAL_OK)
+	#endif
+	{
+		#if (_EEPROM_FREERTOS_IS_ENABLE==1)
+		osDelay(7);
+		#else
+		HAL_Delay(7);
+		#endif
+		return 1;
+	}
+	else
+		return 0;		
+}
+//##########################################################################
+int EEPROM24XX_Load(uint16_t Address,void *data,size_t size_of_data)
+{
+	#if ((_EEPROM_SIZE_KBIT==1) || (_EEPROM_SIZE_KBIT==2))
+	if(HAL_I2C_Mem_Read(&_EEPROM24XX_I2C,0xa0,Address,I2C_MEMADD_SIZE_8BIT,(uint8_t*)data,size_of_data,100) == HAL_OK)
+	#else
+	if(HAL_I2C_Mem_Read(&_EEPROM24XX_I2C,0xa0,Address,I2C_MEMADD_SIZE_16BIT,(uint8_t*)data,size_of_data,100) == HAL_OK)
+	#endif
+	{
+		return 1;
+	}
+	else
+		return 0;		
+}
+void HAL_I2C1_MspInit(I2C_HandleTypeDef* i2cHandle)
+{
+
+  GPIO_InitTypeDef GPIO_InitStruct;
+  if(i2cHandle->Instance==I2C1)
+  {
+  /* USER CODE BEGIN I2C1_MspInit 0 */
+	__HAL_RCC_I2C1_CLK_ENABLE();
+  /* USER CODE END I2C1_MspInit 0 */
+  
+    /**I2C1 GPIO Configuration    
+    PB6     ------> I2C1_SCL
+    PB7     ------> I2C1_SDA 
+    */
+    GPIO_InitStruct.Pin = GPIO_PIN_6|GPIO_PIN_7;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+    /* Peripheral clock enable */
+    __HAL_RCC_I2C1_CLK_ENABLE();
+  /* USER CODE BEGIN I2C1_MspInit 1 */
+
+  /* USER CODE END I2C1_MspInit 1 */
+  }
+  else if(i2cHandle->Instance==I2C2)
+  {
+  /* USER CODE BEGIN I2C2_MspInit 0 */
+	__HAL_RCC_I2C2_CLK_ENABLE();
+  /* USER CODE END I2C2_MspInit 0 */
+  
+    /**I2C2 GPIO Configuration    
+    PB10     ------> I2C2_SCL
+    PB11     ------> I2C2_SDA 
+    */
+    GPIO_InitStruct.Pin = GPIO_PIN_10|GPIO_PIN_11;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+    /* Peripheral clock enable */
+    __HAL_RCC_I2C2_CLK_ENABLE();
+  /* USER CODE BEGIN I2C2_MspInit 1 */
+
+  /* USER CODE END I2C2_MspInit 1 */
+  }
+}
+
 int main(void)
 {
   HAL_Init();
@@ -53,6 +161,7 @@ int main(void)
   MX_I2C1_Init();
   MX_TIM2_Init();
 	HAL_TIM_Base_Start_IT(&htim2);
+	HAL_I2C1_MspInit(&hi2c1);
   /* definition and creation of main_isr */
   osThreadDef(main_isr, start_main_isr, osPriorityNormal, 0, 128);
   main_isrHandle = osThreadCreate(osThread(main_isr), NULL);
@@ -110,7 +219,7 @@ void SystemClock_Config(void)
 static void MX_I2C1_Init(void)
 {
   hi2c1.Instance = I2C1;
-  hi2c1.Init.ClockSpeed = 100000;
+  hi2c1.Init.ClockSpeed = 25000;
   hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
   hi2c1.Init.OwnAddress1 = 0;
   hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
@@ -200,7 +309,17 @@ void start_main_isr(void const * argument)
   for(;;)
   {
 		printf("log command: Hello\r\n");
+		while(EEPROM24XX_IsConnected()==0)
+	{
+		HAL_Delay(100);
+	}
+		EEPROM24XX_Save(0,buff_a,8);	
 		osDelay(1000);
+		
+		EEPROM24XX_Load(0,buff_b,8);	
+		osDelay(1000);	
+			
+		
   }
 }
 
@@ -221,7 +340,7 @@ void start_setup_isr(void const * argument)
 			osDelay(10);
 			while(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_14)==0);
 			//BT_2=0;
-			data_number=data_number-1;
+			//data_number=data_number-1;
 		}
 		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
 		//if(BT_1==0){BT_1=1;data_number++;}	

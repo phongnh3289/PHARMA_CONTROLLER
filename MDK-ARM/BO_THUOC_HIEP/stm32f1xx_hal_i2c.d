@@ -1,4 +1,4 @@
-bo_thuoc_hiep\stm32f1xx_hal_i2c.o: ../Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_i2c.c
+bo_thuoc_hiep\stm32f1xx_hal_i2c.o: ..\Drivers\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_i2c.c
 bo_thuoc_hiep\stm32f1xx_hal_i2c.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal.h
 bo_thuoc_hiep\stm32f1xx_hal_i2c.o: ../Inc/stm32f1xx_hal_conf.h
 bo_thuoc_hiep\stm32f1xx_hal_i2c.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_rcc.h

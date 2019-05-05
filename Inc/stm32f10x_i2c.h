@@ -29,7 +29,7 @@
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32f10x.h"
+#include "stm32f1xx.h"
 
 /** @addtogroup STM32F10x_StdPeriph_Driver
   * @{
@@ -47,26 +47,6 @@
   * @brief  I2C Init structure definition  
   */
 
-typedef struct
-{
-  uint32_t I2C_ClockSpeed;          /*!< Specifies the clock frequency.
-                                         This parameter must be set to a value lower than 400kHz */
-
-  uint16_t I2C_Mode;                /*!< Specifies the I2C mode.
-                                         This parameter can be a value of @ref I2C_mode */
-
-  uint16_t I2C_DutyCycle;           /*!< Specifies the I2C fast mode duty cycle.
-                                         This parameter can be a value of @ref I2C_duty_cycle_in_fast_mode */
-
-  uint16_t I2C_OwnAddress1;         /*!< Specifies the first device own address.
-                                         This parameter can be a 7-bit or 10-bit address. */
-
-  uint16_t I2C_Ack;                 /*!< Enables or disables the acknowledgement.
-                                         This parameter can be a value of @ref I2C_acknowledgement */
-
-  uint16_t I2C_AcknowledgedAddress; /*!< Specifies if 7-bit or 10-bit address is acknowledged.
-                                         This parameter can be a value of @ref I2C_acknowledged_address */
-}I2C_InitTypeDef;
 
 /**
   * @}
@@ -99,7 +79,7 @@ typedef struct
 
 #define I2C_DutyCycle_16_9              ((uint16_t)0x4000) /*!< I2C fast mode Tlow/Thigh = 16/9 */
 #define I2C_DutyCycle_2                 ((uint16_t)0xBFFF) /*!< I2C fast mode Tlow/Thigh = 2 */
-#define IS_I2C_DUTY_CYCLE(CYCLE) (((CYCLE) == I2C_DutyCycle_16_9) || \
+//#define IS_I2C_DUTY_CYCLE(CYCLE) (((CYCLE) == I2C_DutyCycle_16_9) || \
                                   ((CYCLE) == I2C_DutyCycle_2))
 /**
   * @}
@@ -206,11 +186,12 @@ typedef struct
 /** @defgroup I2C_interrupts_definition 
   * @{
   */
-
+/*
 #define I2C_IT_BUF                      ((uint16_t)0x0400)
 #define I2C_IT_EVT                      ((uint16_t)0x0200)
 #define I2C_IT_ERR                      ((uint16_t)0x0100)
 #define IS_I2C_CONFIG_IT(IT) ((((IT) & (uint16_t)0xF8FF) == 0x00) && ((IT) != 0x00))
+*/
 /**
   * @}
   */ 
@@ -254,7 +235,7 @@ typedef struct
 /** 
   * @brief  SR2 register flags  
   */
-
+/*
 #define I2C_FLAG_DUALF                  ((uint32_t)0x00800000)
 #define I2C_FLAG_SMBHOST                ((uint32_t)0x00400000)
 #define I2C_FLAG_SMBDEFAULT             ((uint32_t)0x00200000)
@@ -262,11 +243,11 @@ typedef struct
 #define I2C_FLAG_TRA                    ((uint32_t)0x00040000)
 #define I2C_FLAG_BUSY                   ((uint32_t)0x00020000)
 #define I2C_FLAG_MSL                    ((uint32_t)0x00010000)
-
+*/
 /** 
   * @brief  SR1 register flags  
   */
-
+/*
 #define I2C_FLAG_SMBALERT               ((uint32_t)0x10008000)
 #define I2C_FLAG_TIMEOUT                ((uint32_t)0x10004000)
 #define I2C_FLAG_PECERR                 ((uint32_t)0x10001000)
@@ -281,7 +262,7 @@ typedef struct
 #define I2C_FLAG_BTF                    ((uint32_t)0x10000004)
 #define I2C_FLAG_ADDR                   ((uint32_t)0x10000002)
 #define I2C_FLAG_SB                     ((uint32_t)0x10000001)
-
+*/
 #define IS_I2C_CLEAR_FLAG(FLAG) ((((FLAG) & (uint16_t)0x20FF) == 0x00) && ((FLAG) != (uint16_t)0x00))
 
 #define IS_I2C_GET_FLAG(FLAG) (((FLAG) == I2C_FLAG_DUALF) || ((FLAG) == I2C_FLAG_SMBHOST) || \
@@ -501,7 +482,7 @@ typedef struct
   * @{
   */
 
-#define IS_I2C_OWN_ADDRESS1(ADDRESS1) ((ADDRESS1) <= 0x3FF)
+//#define IS_I2C_OWN_ADDRESS1(ADDRESS1) ((ADDRESS1) <= 0x3FF)
 /**
   * @}
   */
@@ -510,7 +491,7 @@ typedef struct
   * @{
   */
 
-#define IS_I2C_CLOCK_SPEED(SPEED) (((SPEED) >= 0x1) && ((SPEED) <= 400000))
+//#define IS_I2C_CLOCK_SPEED(SPEED) (((SPEED) >= 0x1) && ((SPEED) <= 400000))
 /**
   * @}
   */

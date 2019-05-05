@@ -70,7 +70,7 @@ int at24_HAL_WriteBytes(I2C_HandleTypeDef *hi2c,uint16_t DevAddress,uint16_t Mem
 			while( (TxBufferSize-16)>0 )
 			{
 				//if your data is more than 16 bytes,you are here
-				 while(HAL_I2C_Mem_Write(&hi2c,(uint16_t)DevAddress,(uint16_t)MemAddress,I2C_MEMADD_SIZE_8BIT,pData,(uint16_t)16,1000)!= HAL_OK);
+				 while(HAL_I2C_Mem_Write(hi2c,(uint16_t)DevAddress,(uint16_t)MemAddress,I2C_MEMADD_SIZE_8BIT,pData,(uint16_t)16,1000)!= HAL_OK);
 				 TxBufferSize-=16;
 				 pData+=16;
 				 MemAddress+=16;
@@ -137,12 +137,12 @@ int at24_HAL_SequentialRead(I2C_HandleTypeDef *hi2c ,uint8_t DevAddress,uint16_t
 	 */
 		while( (RxBufferSize-16)>0)
 		{
-			while(HAL_I2C_Mem_Read(&hi2c, (uint16_t)DevAddress,(uint16_t)MemAddress,I2C_MEMADD_SIZE_8BIT,pData, (uint16_t)16, (uint32_t)1000)!= HAL_OK);
+			//while(HAL_I2C_Mem_Read(&hi2c, (uint16_t)DevAddress,(uint16_t)MemAddress,I2C_MEMADD_SIZE_8BIT,pData, (uint16_t)16, (uint32_t)1000)!= HAL_OK);
 			RxBufferSize-=16;
 			pData+=16;
 			MemAddress+=16;
 		}
-		while(HAL_I2C_Mem_Read(&hi2c, (uint16_t)DevAddress,(uint16_t)MemAddress,I2C_MEMADD_SIZE_8BIT,pData, (uint16_t)RxBufferSize, (uint32_t)1000)!= HAL_OK);
+		//while(HAL_I2C_Mem_Read(&hi2c, (uint16_t)DevAddress,(uint16_t)MemAddress,I2C_MEMADD_SIZE_8BIT,pData, (uint16_t)RxBufferSize, (uint32_t)1000)!= HAL_OK);
         /*
          * if DataRecive  is 0xFF or 255 ,this means that block was empty
          */
@@ -161,14 +161,14 @@ int at24_HAL_EraseMemFull(I2C_HandleTypeDef *hi2c)
 	/*
 	 * this may take will don't panic
 	 */
-	uint8_t EraseBuf[16] ={0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff};
+	//uint8_t EraseBuf[16] ={0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff};
 	int i;
 	for (i =0 ; i<1024 ; i+16)
 	{
 		/*
 		 * if you know,0xFF means that block is empty
 		 */
-		sdI2C_WriteBytes(&hi2c,0xA0,(uint16_t )i,EraseBuf,16);
+		//I2C_WriteBytes(&hi2c,0xA0,(uint16_t )i,EraseBuf,16);
 	}
 	return 1;
 }
@@ -188,11 +188,11 @@ int at24_HAL_EraseMemFull(I2C_HandleTypeDef *hi2c)
 
 int at24_HAL_WriteString(I2C_HandleTypeDef *hi2c,char *pString ,uint16_t MemAddress ,uint8_t length)
 {
-	uint8_t pData[length];
-	int i =0;
-	while(*pString)
-		(pData[i++])=(uint8_t)(*pString++);
-	sdI2C_WriteBytes(&hi2c,0xA0,MemAddress,pData,length);
+//	uint8_t pData[length];
+//	int i =0;
+	while(*pString);
+//		(pData[i++])=(uint8_t)(*pString++);
+	//I2C_WriteBytes(&hi2c,0xA0,MemAddress,pData,length);
 	return 1;
 }
 
@@ -212,7 +212,7 @@ int at24_HAL_ReadString(I2C_HandleTypeDef *hi2c,char *pString,uint16_t MemAddres
 {
 	uint8_t pData[length];
 	int i=0;
-	sdI2C_RandomRead(0xA0,MemAddress,pData,length);
+	//I2C_RandomRead(0xA0,MemAddress,pData,length);
 	while(pData[i])
 		(*pString++)=(char)pData[i++];
 	return 1;
