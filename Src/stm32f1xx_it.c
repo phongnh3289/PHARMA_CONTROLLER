@@ -72,6 +72,7 @@
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
+extern TIM_HandleTypeDef htim3;
 extern TIM_HandleTypeDef htim2;
 extern TIM_HandleTypeDef htim1;
 
@@ -204,6 +205,15 @@ void TIM2_IRQHandler(void)
 }
 
 /* USER CODE BEGIN 1 */
+void TIM3_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM2_IRQn 0 */
 
+  /* USER CODE END TIM2_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim3);
+  /* USER CODE BEGIN TIM2_IRQn 1 */
+
+  /* USER CODE END TIM2_IRQn 1 */
+}
 /* USER CODE END 1 */
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
