@@ -14,6 +14,7 @@ osThreadId reserve_isrHandle;
 void HAL_I2C1_MspInit(I2C_HandleTypeDef* i2cHandle);
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+void update_data(uint8_t mode);
 static void MX_USART1_UART_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_TIM2_Init(void);
@@ -23,28 +24,258 @@ void start_setup_isr(void const * argument);
 void start_reserve_isr(void const * argument);
 void ScreenUpdate(void);
 void PrintNumber(uint16_t number);
-#define SS_DIGIT				4
+#define SS_DIGIT				8
 // 7 segment font (0-9)
 // D7=DP, D6=A, D5=B, D4=C, D3=D, D2=E, D1=F, D0=G
 //const uint8_t font[10] ={0x7E, 0x30, 0x6D, 0x79, 0x33, 0x5B, 0x5F, 0x70, 0x7F, 0x7B};
+/* Rows */
+/* Row 1 default */
+#ifndef KEYPAD_ROW_1_PIN
+#define KEYPAD_ROW_1_PORT			GPIOB
+#define KEYPAD_ROW_1_PIN			GPIO_PIN_0
+#endif
+/* Row 2 default */
+#ifndef KEYPAD_ROW_2_PIN
+#define KEYPAD_ROW_2_PORT			GPIOB
+#define KEYPAD_ROW_2_PIN			GPIO_PIN_1
+#endif
+/* Columns */
+/* Column 1 default */
+#ifndef KEYPAD_COLUMN_1_PIN
+#define KEYPAD_COLUMN_1_PORT		GPIOC
+#define KEYPAD_COLUMN_1_PIN			GPIO_PIN_8
+#endif
+/* Column 2 default */
+#ifndef KEYPAD_COLUMN_2_PIN
+#define KEYPAD_COLUMN_2_PORT		GPIOC
+#define KEYPAD_COLUMN_2_PIN			GPIO_PIN_9
+#endif
+/* Column 3 default */
+#ifndef KEYPAD_COLUMN_3_PIN
+#define KEYPAD_COLUMN_3_PORT		GPIOC
+#define KEYPAD_COLUMN_3_PIN			GPIO_PIN_10
+#endif
+/* Column 4 default */
+#ifndef KEYPAD_COLUMN_4_PIN
+#define KEYPAD_COLUMN_4_PORT		GPIOC
+#define KEYPAD_COLUMN_4_PIN			GPIO_PIN_11
+#endif
+/* Column 5 default */
+#ifndef KEYPAD_COLUMN_5_PIN
+#define KEYPAD_COLUMN_5_PORT		GPIOC
+#define KEYPAD_COLUMN_5_PIN			GPIO_PIN_12
+#endif
+/* Column 6 default */
+#ifndef KEYPAD_COLUMN_6_PIN
+#define KEYPAD_COLUMN_6_PORT		GPIOC
+#define KEYPAD_COLUMN_6_PIN			GPIO_PIN_13
+#endif
+/* Column 7 default */
+#ifndef KEYPAD_COLUMN_7_PIN
+#define KEYPAD_COLUMN_7_PORT		GPIOC
+#define KEYPAD_COLUMN_7_PIN			GPIO_PIN_14
+#endif
+/* Number of milliseconds between 2 reads */
+#ifndef KEYPAD_READ_INTERVAL
+#define KEYPAD_READ_INTERVAL        10
+#endif
+
+/* Keypad no pressed */
+#define KEYPAD_NO_PRESSED			(uint8_t)0xFF
+typedef enum {
+	TM_KEYPAD_Button_0 = 0x00,                     /*!< Button 0 code */
+	TM_KEYPAD_Button_1 = 0x01,                     /*!< Button 1 code */
+	TM_KEYPAD_Button_2 = 0x02,                     /*!< Button 2 code */
+	TM_KEYPAD_Button_3 = 0x03,                     /*!< Button 3 code */
+	TM_KEYPAD_Button_4 = 0x04,                     /*!< Button 4 code */
+	TM_KEYPAD_Button_5 = 0x05,                     /*!< Button 5 code */
+	TM_KEYPAD_Button_6 = 0x06,                     /*!< Button 6 code */
+	TM_KEYPAD_Button_7 = 0x07,                     /*!< Button 7 code */
+	TM_KEYPAD_Button_8 = 0x08,                     /*!< Button 8 code */
+	TM_KEYPAD_Button_9 = 0x09,                     /*!< Button 9 code */
+	TM_KEYPAD_Button_STAR = 0x0A,                  /*!< Button START code */
+	TM_KEYPAD_Button_HASH = 0x0B,                  /*!< Button HASH code */
+	TM_KEYPAD_Button_A = 0x0C,	                   /*!< Button A code. Only on large size */
+	TM_KEYPAD_Button_B = 0x0D,	                   /*!< Button B code. Only on large size */
+	TM_KEYPAD_Button_C = 0x0E,	                   /*!< Button C code. Only on large size */
+	TM_KEYPAD_Button_D = 0x0F,	                   /*!< Button D code. Only on large size */
+	TM_KEYPAD_Button_NOPRESSED = KEYPAD_NO_PRESSED /*!< No button pressed */
+} TM_KEYPAD_Button_t;
+typedef enum {
+	TM_KEYPAD_Type_Large = 0x00, /*!< Keypad 4x4 size */
+	TM_KEYPAD_Type_Small         /*!< Keypad 3x4 size */
+} TM_KEYPAD_Type_t;
+void TM_KEYPAD_Init(TM_KEYPAD_Type_t type);
+TM_KEYPAD_Button_t TM_KEYPAD_Read(void);
+void TM_KEYPAD_Update(void);
+#define KEYPAD_COLUMN_1_HIGH		HAL_GPIO_WritePin(KEYPAD_COLUMN_1_PORT, KEYPAD_COLUMN_1_PIN,GPIO_PIN_SET)
+#define KEYPAD_COLUMN_1_LOW			HAL_GPIO_WritePin(KEYPAD_COLUMN_1_PORT, KEYPAD_COLUMN_1_PIN,GPIO_PIN_RESET)
+#define KEYPAD_COLUMN_2_HIGH		HAL_GPIO_WritePin(KEYPAD_COLUMN_2_PORT, KEYPAD_COLUMN_2_PIN,GPIO_PIN_SET)
+#define KEYPAD_COLUMN_2_LOW			HAL_GPIO_WritePin(KEYPAD_COLUMN_2_PORT, KEYPAD_COLUMN_2_PIN,GPIO_PIN_RESET)
+#define KEYPAD_COLUMN_3_HIGH		HAL_GPIO_WritePin(KEYPAD_COLUMN_3_PORT, KEYPAD_COLUMN_3_PIN,GPIO_PIN_SET)
+#define KEYPAD_COLUMN_3_LOW			HAL_GPIO_WritePin(KEYPAD_COLUMN_3_PORT, KEYPAD_COLUMN_3_PIN,GPIO_PIN_RESET)
+#define KEYPAD_COLUMN_4_HIGH		HAL_GPIO_WritePin(KEYPAD_COLUMN_4_PORT, KEYPAD_COLUMN_4_PIN,GPIO_PIN_SET)
+#define KEYPAD_COLUMN_4_LOW			HAL_GPIO_WritePin(KEYPAD_COLUMN_4_PORT, KEYPAD_COLUMN_4_PIN,GPIO_PIN_RESET)
+#define KEYPAD_COLUMN_5_HIGH		HAL_GPIO_WritePin(KEYPAD_COLUMN_5_PORT, KEYPAD_COLUMN_5_PIN,GPIO_PIN_SET)
+#define KEYPAD_COLUMN_5_LOW			HAL_GPIO_WritePin(KEYPAD_COLUMN_5_PORT, KEYPAD_COLUMN_5_PIN,GPIO_PIN_RESET)
+#define KEYPAD_COLUMN_6_HIGH		HAL_GPIO_WritePin(KEYPAD_COLUMN_6_PORT, KEYPAD_COLUMN_6_PIN,GPIO_PIN_SET)
+#define KEYPAD_COLUMN_6_LOW			HAL_GPIO_WritePin(KEYPAD_COLUMN_6_PORT, KEYPAD_COLUMN_6_PIN,GPIO_PIN_RESET)
+#define KEYPAD_COLUMN_7_HIGH		HAL_GPIO_WritePin(KEYPAD_COLUMN_7_PORT, KEYPAD_COLUMN_7_PIN,GPIO_PIN_SET)
+#define KEYPAD_COLUMN_7_LOW			HAL_GPIO_WritePin(KEYPAD_COLUMN_7_PORT, KEYPAD_COLUMN_7_PIN,GPIO_PIN_RESET)
+
+/* Read input pins */
+#define KEYPAD_ROW_1_CHECK			(!HAL_GPIO_ReadPin(KEYPAD_ROW_1_PORT, KEYPAD_ROW_1_PIN))
+#define KEYPAD_ROW_2_CHECK			(!HAL_GPIO_ReadPin(KEYPAD_ROW_2_PORT, KEYPAD_ROW_2_PIN))
+
+
+uint8_t KEYPAD_INT_Buttons[2][8] = {
+	{0x02, 0x03, 0x05, 'i', 0x04, 'o', 's', 0x07},
+	{0x01, 0x04, 0x0b, 'p', 0x0d, 'c', 0x0f, 'd'},
+};
+
+/* Private functions */
+void TM_KEYPAD_INT_SetColumn(uint8_t column);
+uint8_t TM_KEYPAD_INT_CheckRow(uint8_t column);
+uint8_t TM_KEYPAD_INT_Read(void);
+
+/* Private variables */
+TM_KEYPAD_Type_t TM_KEYPAD_INT_KeypadType;
+static TM_KEYPAD_Button_t KeypadStatus = TM_KEYPAD_Button_NOPRESSED;
+
+/* Private */
+void TM_KEYPAD_INT_SetColumn(uint8_t column) {
+	/* Set rows high */
+	KEYPAD_COLUMN_1_HIGH;
+	KEYPAD_COLUMN_2_HIGH;
+	KEYPAD_COLUMN_3_HIGH;
+	KEYPAD_COLUMN_4_HIGH;
+	KEYPAD_COLUMN_5_HIGH;
+	KEYPAD_COLUMN_6_HIGH;
+	KEYPAD_COLUMN_7_HIGH;
+	/* Set column low */
+	if (column == 1) {
+		KEYPAD_COLUMN_1_LOW;
+	}
+	if (column == 2) {
+		KEYPAD_COLUMN_2_LOW;
+	}
+	if (column == 3) {
+		KEYPAD_COLUMN_3_LOW;
+	}
+	if (column == 4) {
+		KEYPAD_COLUMN_4_LOW;
+	}
+		if (column == 5) {
+		KEYPAD_COLUMN_5_LOW;
+	}
+	if (column == 6) {
+		KEYPAD_COLUMN_6_LOW;
+	}
+	if (column == 7) {
+		KEYPAD_COLUMN_7_LOW;
+	}
+}
+
+uint8_t TM_KEYPAD_INT_CheckRow(uint8_t column) {
+	/* Read rows */
+	
+	/* Scan row 1 */
+	if (KEYPAD_ROW_1_CHECK) {
+		return KEYPAD_INT_Buttons[0][column - 1];	
+	}
+	/* Scan row 2 */
+	if (KEYPAD_ROW_2_CHECK) {
+		return KEYPAD_INT_Buttons[1][column - 1];
+	}
+	/* Not pressed */
+	return KEYPAD_NO_PRESSED;
+}
+
+uint8_t TM_KEYPAD_INT_Read(void) {
+	uint8_t check;
+	/* Set row 1 to LOW */
+	TM_KEYPAD_INT_SetColumn(1);
+	/* Check rows */
+	check = TM_KEYPAD_INT_CheckRow(1);
+	if (check != KEYPAD_NO_PRESSED) {
+		return check;
+	}
+	
+	/* Set row 2 to LOW */
+	TM_KEYPAD_INT_SetColumn(2);
+	/* Check columns */
+	check = TM_KEYPAD_INT_CheckRow(2);
+	if (check != KEYPAD_NO_PRESSED) {
+		return check;
+	}
+/* Set row 3 to LOW */
+	TM_KEYPAD_INT_SetColumn(3);
+	/* Check columns */
+	check = TM_KEYPAD_INT_CheckRow(3);
+	if (check != KEYPAD_NO_PRESSED) {
+		return check;
+	}
+	/* Set row 4 to LOW */
+	TM_KEYPAD_INT_SetColumn(4);
+	/* Check columns */
+	check = TM_KEYPAD_INT_CheckRow(4);
+	if (check != KEYPAD_NO_PRESSED) {
+		return check;
+	}
+	/* Set row 5 to LOW */
+	TM_KEYPAD_INT_SetColumn(5);
+	/* Check columns */
+	check = TM_KEYPAD_INT_CheckRow(5);
+	if (check != KEYPAD_NO_PRESSED) {
+		return check;
+	}
+	/* Set row 6 to LOW */
+	TM_KEYPAD_INT_SetColumn(6);
+	/* Check columns */
+	check = TM_KEYPAD_INT_CheckRow(6);
+	if (check != KEYPAD_NO_PRESSED) {
+		return check;
+	}
+	/* Set row 7 to LOW */
+	TM_KEYPAD_INT_SetColumn(7);
+	/* Check columns */
+	check = TM_KEYPAD_INT_CheckRow(7);
+	if (check != KEYPAD_NO_PRESSED) {
+		return check;
+	}
+	else return KEYPAD_NO_PRESSED;
+}
+
+void TM_KEYPAD_Update(void) {
+	static uint16_t millis = 0;
+	
+	/* Every X ms read */
+	if (++millis >= KEYPAD_READ_INTERVAL && KeypadStatus == TM_KEYPAD_Button_NOPRESSED) {
+		/* Reset */
+		millis = 0;
+		
+		/* Read keyboard */
+		KeypadStatus = (TM_KEYPAD_Button_t) TM_KEYPAD_INT_Read();
+	}
+}
 const uint8_t font[96] = {	
-	0x7E, /* 0 */
-	0x30, /* 1 */
-	0x6D, /* 2 */
-	0x79, /* 3 */
-	0x33, /* 4 */
-	0x5B, /* 5 */
-	0x5F, /* 6 */
-	0x70, /* 7 */
+	0x3f, /* 0 */
+	0x06, /* 1 */
+	0x5B, /* 2 */
+	0x4F, /* 3 */
+	0x66, /* 4 */
+	0x6d, /* 5 */
+	0x7d, /* 6 */
+	0x07, /* 7 */
 	0x7F, /* 8 */
-	0x7B, /* 9 */
+	0x6f, /* 9 */
 	0x00, /* (space) */
 	0x77, /* A */
-	0x1F, /* B */
-	0x4E, /* C */
-	0x3D, /* D */
-	0x4F, /* E */
-	0x47, /* F */
+	0x7c, /* B */
+	0x39, /* C */
+	0x5e, /* D */
+	0x79, /* E */
+	0x71, /* F */
 	0x3D, /* G */
 	0x76, /* H */
 	0x30, /* I */
@@ -53,12 +284,12 @@ const uint8_t font[96] = {
 	0x38, /* L */
 	0x15, /* M */
 	0x37, /* N */
-	0x7E, /* O */
-	0x67, /* P */
+	0x5c, /* O */
+	0x73, /* P */
 	0x6B, /* Q */
 	0x33, /* R */
-	0x5B, /* S */
-	0x46, /* T */
+	0x6D, /* S */
+	0x31, /* T */
 	0x3E, /* U */
 	0x3E, /* V */
 	0x2A, /* W */
@@ -121,16 +352,17 @@ const uint8_t font[96] = {
 	0x21, /* * */
 	0x70, /* + */
 	0x10, /* , */
-	0x40, /* - */
+	0x01, /* - */
 	0x80, /* . */
 	0x52, /* / */
 };
-volatile uint8_t buffer[8]={29,30,25,26,10,10,10,10};
-volatile uint8_t kiemtra_ctht=0, count_en=0;  
-volatile uint32_t data_number=0, timer_counter=0, tg_hut=0, tg_nito=0, tg_han=0, tg_lammat=0, tg_xa=0;
+volatile uint8_t buffer[8]={29,30,25,26,10,10,10,10}, digit = 0, key_pad=0;
+volatile uint8_t kiemtra_ctht=0, count_en=0, program_number=1, program_en=0, mode_hut=0, mode_nito=0, mode_han=0, mode_lammat=0, mode_xa=0;  
+volatile uint16_t data_number=0, timer_counter=0, tg_hut=0, tg_nito=0, tg_han=0, tg_lammat=0, tg_xa=0;
+
 //volatile int8_t BT_1=1, BT_2=1;
 uint8_t data_load[15]={0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01};
-uint8_t data_store_1[15]={0x00,0x06,0x03,0x00,0x05,0x06,0x00,0x08,0x02,0x00,0x04,0x05,0x01,0x07,0x08};
+uint8_t data_store_1[15]={0x00,0x06,0x03,0x00,0x05,0x06,0x00,0x08,0x02,0x00,0x04,0x05,0x01,0x04,0x08};
 uint8_t data_store_2[15]={0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x02,0x03,0x04,0x05,0x06,0x07,0x08};
 uint8_t data_store_3[15]={0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x02,0x03,0x04,0x05,0x06,0x07,0x08};
 uint8_t data_store_4[15]={0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x02,0x03,0x04,0x05,0x06,0x07,0x08};
@@ -257,11 +489,17 @@ int main(void)
 	HAL_TIM_Base_Start_IT(&htim2);
 	HAL_TIM_Base_Start_IT(&htim3);
 	HAL_I2C1_MspInit(&hi2c1);
-	while(EEPROM24XX_IsConnected()==0)
-	{
-		HAL_Delay(100);
-	}
-		EEPROM24XX_Save(0,data_store_1,15);	
+	while(EEPROM24XX_IsConnected()==0)HAL_Delay(100);
+	EEPROM24XX_Load(0,data_store_1,15);HAL_Delay(100);	
+	EEPROM24XX_Load(0x10,data_store_2,15);HAL_Delay(100);
+	EEPROM24XX_Load(0x20,data_store_3,15);HAL_Delay(100);	
+	EEPROM24XX_Load(0x30,data_store_4,15);HAL_Delay(100);	
+	EEPROM24XX_Load(0x40,data_store_5,15);HAL_Delay(100);	
+	EEPROM24XX_Load(0x50,data_store_6,15);HAL_Delay(100);	
+	EEPROM24XX_Load(0x60,data_store_7,15);HAL_Delay(100);	
+	EEPROM24XX_Load(0x70,data_store_8,15);HAL_Delay(100);	
+	EEPROM24XX_Load(0x80,data_store_9,15);HAL_Delay(100);	
+	EEPROM24XX_Load(0x90,data_store_10,15);HAL_Delay(100);	
   /* definition and creation of main_isr */
   osThreadDef(main_isr, start_main_isr, osPriorityNormal, 0, 128);
   main_isrHandle = osThreadCreate(osThread(main_isr), NULL);
@@ -277,13 +515,13 @@ int main(void)
   osKernelStart();
   while (1);
 }
-
+/*
 void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+  RCC_OscInitStruct.HSEState = RCC_HSI_ON;
   RCC_OscInitStruct.HSEPredivValue = RCC_HSE_PREDIV_DIV1;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
@@ -305,6 +543,35 @@ void SystemClock_Config(void)
     Error_Handler();
   }
 }
+*/
+
+void SystemClock_Config(void)
+{
+  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI_DIV2;
+  RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL16;
+  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
+                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+}
+
 static void MX_I2C1_Init(void)
 {
   hi2c1.Instance = I2C1;
@@ -326,9 +593,9 @@ static void MX_TIM2_Init(void)
   TIM_ClockConfigTypeDef sClockSourceConfig = {0};
   TIM_MasterConfigTypeDef sMasterConfig = {0};
   htim2.Instance = TIM2;
-  htim2.Init.Prescaler = 35999;
+  htim2.Init.Prescaler = 31999;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 10;
+  htim2.Init.Period = 5;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
@@ -353,7 +620,7 @@ static void MX_TIM3_Init(void)
   TIM_MasterConfigTypeDef sMasterConfig = {0};
   htim3.Instance = TIM3;
 	//72MHz:36000_prescaler:Fcycle=2kHz:200~0.1s
-  htim3.Init.Prescaler = 35999;
+  htim3.Init.Prescaler = 31999;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim3.Init.Period = 200;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
@@ -401,17 +668,21 @@ static void MX_GPIO_Init(void)
 	//Port A
 	GPIO_InitStructA.Pin = 0x00ff;
   GPIO_InitStructA.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStructA.Speed = GPIO_SPEED_FREQ_HIGH;
+  GPIO_InitStructA.Speed = GPIO_SPEED_FREQ_MEDIUM;
 	HAL_GPIO_Init(GPIOA, &GPIO_InitStructA);
 	//Port B
-	GPIO_InitStructB.Pin = 0xffff;
-  GPIO_InitStructB.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStructB.Speed = GPIO_SPEED_FREQ_HIGH;
+	//GPIO_InitStructB.Pin = 0x00ff;
+  //GPIO_InitStructB.Mode = GPIO_MODE_OUTPUT_PP;
+  //GPIO_InitStructB.Speed = GPIO_SPEED_FREQ_HIGH;
+  //HAL_GPIO_Init(GPIOB, &GPIO_InitStructB);
+	GPIO_InitStructB.Pin = 0x00ff;
+  GPIO_InitStructB.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStructB.Speed = GPIO_SPEED_FREQ_MEDIUM;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStructB);
 	//Port C
-	GPIO_InitStructC.Pin = GPIO_PIN_0|GPIO_PIN_14;
-  GPIO_InitStructC.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStructC.Speed = GPIO_SPEED_FREQ_HIGH;
+	GPIO_InitStructC.Pin = 0xffff;
+  GPIO_InitStructC.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStructC.Speed = GPIO_SPEED_FREQ_MEDIUM;
 	HAL_GPIO_Init(GPIOC, &GPIO_InitStructC);
 }
 /* USER CODE END Header_start_main_isr */
@@ -420,42 +691,174 @@ void start_main_isr(void const * argument)
 	printf("Device: drug product controller\r\n");
 	printf("Revise: 28/04/2019\r\n");
 	printf("Customer: Doan Van Luong@Domesco Dong Thap\r\n");
-	printf("Designer: phongnh3289\r\n");
+	printf("Designer: phongnh3289\r\n");	
   for(;;)
   {
-		printf("log command: Hello\r\n");
-	/*	while(EEPROM24XX_IsConnected()==0)
-	{
-		HAL_Delay(100);
-	}
-		EEPROM24XX_Save(0,buff_a,8);	
-		osDelay(1000);		
-		EEPROM24XX_Load(0,data_load,15);	
-		osDelay(1000);	
-	*/
-		osDelay(1000);			
+		if(count_en==1)PrintNumber(data_number);
+		osDelay(10);			
   }
 }
-
+	
 void start_setup_isr(void const * argument)
 {
   for(;;)
   {
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_SET);
+		KeypadStatus = (TM_KEYPAD_Button_t) TM_KEYPAD_INT_Read();
+		if(KeypadStatus!=0xff)key_pad=KeypadStatus;
+		osDelay(100);
+///////////////////////////////////////////////////////////////////////////////////////////////////	
+//Scan Key group 4X - GPIOC11
+		/*
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_11, GPIO_PIN_SET);
+		//osDelay(1);
+		//increase button
+		if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_0)==0){
+			//osDelay(10);
+			while(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_0)==0)osDelay(10);
+			if(mode_hut==1){
+					data_number++;
+					update_data(0);			
+			}
+			if(program_en==1){				
+				if(program_number==1){buffer[0]=1;buffer[1]=93;}
+				else if(program_number==2){buffer[0]=2;buffer[1]=93;}
+				else if(program_number==3){buffer[0]=3;buffer[1]=93;}
+				else if(program_number==4){buffer[0]=4;buffer[1]=93;}
+				else if(program_number==5){buffer[0]=5;buffer[1]=93;}
+				else if(program_number==6){buffer[0]=6;buffer[1]=93;}
+				else if(program_number==7){buffer[0]=7;buffer[1]=93;}
+				else if(program_number==8){buffer[0]=8;buffer[1]=93;}
+				else if(program_number==9){buffer[0]=9;buffer[1]=93;}
+				else if(program_number==10){buffer[0]=1;buffer[1]=0;}		
+				buffer[2]=93;buffer[3]=93;buffer[4]=93;buffer[5]=93;buffer[6]=93;buffer[7]=93;
+				program_number++;
+				if(program_number>10)program_number=10;
+				tmp_data=7;
+			}
+		}	
+		//program button
+		if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_1)==0){
+			//osDelay(10);
+			while(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_1)==0)osDelay(10);	
+			program_en++;
+			if(program_en==2){
+				while(EEPROM24XX_IsConnected()==0)HAL_Delay(100);	
+				if(program_number==1)EEPROM24XX_Save(0,data_store_1,15);	
+				else if(program_number==2)EEPROM24XX_Save(0x10,data_store_2,15);
+				else if(program_number==3)EEPROM24XX_Save(0x20,data_store_3,15);
+				else if(program_number==4)EEPROM24XX_Save(0x30,data_store_4,15);
+				else if(program_number==5)EEPROM24XX_Save(0x40,data_store_5,15);
+				else if(program_number==6)EEPROM24XX_Save(0x50,data_store_6,15);
+				else if(program_number==7)EEPROM24XX_Save(0x60,data_store_7,15);
+				else if(program_number==8)EEPROM24XX_Save(0x70,data_store_8,15);
+				else if(program_number==9)EEPROM24XX_Save(0x80,data_store_9,15);
+				else if(program_number==10)EEPROM24XX_Save(0x90,data_store_10,15);
+				mode_hut=0;mode_han=0;mode_lammat=0;mode_nito=0;mode_xa=0;
+				program_en=0;
+				HAL_Delay(100);	
+			}				
+			if(program_number==1){buffer[0]=12;buffer[1]=data_store_1[0];buffer[2]=data_store_1[1];buffer[3]=data_store_1[2];}
+				else if(program_number==2){buffer[0]=12;buffer[1]=data_store_2[0];buffer[2]=data_store_2[1];buffer[3]=data_store_2[2];}
+				else if(program_number==3){buffer[0]=12;buffer[1]=data_store_3[0];buffer[2]=data_store_3[1];buffer[3]=data_store_3[2];}
+				else if(program_number==4){buffer[0]=12;buffer[1]=data_store_4[0];buffer[2]=data_store_4[1];buffer[3]=data_store_4[2];}
+				else if(program_number==5){buffer[0]=12;buffer[1]=data_store_5[0];buffer[2]=data_store_5[1];buffer[3]=data_store_5[2];}
+				else if(program_number==6){buffer[0]=12;buffer[1]=data_store_6[0];buffer[2]=data_store_6[1];buffer[3]=data_store_6[2];}
+				else if(program_number==7){buffer[0]=12;buffer[1]=data_store_7[0];buffer[2]=data_store_7[1];buffer[3]=data_store_7[2];}
+				else if(program_number==8){buffer[0]=12;buffer[1]=data_store_8[0];buffer[2]=data_store_8[1];buffer[3]=data_store_8[2];}
+				else if(program_number==9){buffer[0]=12;buffer[1]=data_store_9[0];buffer[2]=data_store_9[1];buffer[3]=data_store_9[2];}
+				else if(program_number==10){buffer[0]=12;buffer[1]=data_store_10[0];buffer[2]=data_store_10[1];buffer[3]=data_store_10[2];}
+				data_number=buffer[1]*100+buffer[2]*10+buffer[3];
+				tmp_data=8;
+		}
+		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_11, GPIO_PIN_RESET);*/
+///////////////////////////////////////////////////////////////////////////////////////////////////		
+//Scan Key group 5X - GPIOC12
+/*
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_SET);
 		osDelay(10);
-		if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_0)==0){
+		//empty button
+		if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_0)==0){
 			osDelay(10);
-			while(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_0)==0);
-			data_number=data_number+1;
-		}
-		if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_14)==0){
+			while(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_0)==0);
+		}	
+		//empty button
+		if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_1)==0){
 			osDelay(10);
-			while(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_14)==0);
-			data_number=data_number-1;
+			while(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_1)==0);		
 		}
-		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);			
-		if(count_en==1)PrintNumber(data_number);
-		osDelay(20);
+		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);	
+		*/
+///////////////////////////////////////////////////////////////////////////////////////////////////		
+//Scan Key group 6X - GPIOC13
+ /*   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
+		//osDelay(1);
+		//sensor off button
+		if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_0)==0){
+			//osDelay(10);
+			while(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_0)==0)osDelay(10);
+			tmp_data=9;
+		}	
+		//clear button
+		if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_1)==0){
+			//osDelay(10);
+			while(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_1)==0)osDelay(10);		
+			tmp_data=10;
+		}
+		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
+///////////////////////////////////////////////////////////////////////////////////////////////////		
+//Scan Key group 7X - GPIOC14
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_14, GPIO_PIN_SET);
+		//osDelay(1);
+		//on/off button
+		if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_0)==0){
+			//osDelay(10);
+			while(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_0)==0)osDelay(10);
+			tmp_data=11;
+		}	
+		//deacrease button
+		if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_1)==0){
+			//osDelay(10);
+			while(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_1)==0)osDelay(10);
+if(mode_hut==1){
+					data_number--;
+					update_data(0);
+			}
+			if(program_en==1){				
+				if(program_number==1){buffer[0]=1;buffer[1]=93;}
+				else if(program_number==2){buffer[0]=2;buffer[1]=93;}
+				else if(program_number==3){buffer[0]=3;buffer[1]=93;}
+				else if(program_number==4){buffer[0]=4;buffer[1]=93;}
+				else if(program_number==5){buffer[0]=5;buffer[1]=93;}
+				else if(program_number==6){buffer[0]=6;buffer[1]=93;}
+				else if(program_number==7){buffer[0]=7;buffer[1]=93;}
+				else if(program_number==8){buffer[0]=8;buffer[1]=93;}
+				else if(program_number==9){buffer[0]=9;buffer[1]=93;}
+				else if(program_number==10){buffer[0]=1;buffer[1]=0;}		
+				buffer[2]=93;buffer[3]=93;buffer[4]=93;buffer[5]=93;buffer[6]=93;buffer[7]=93;
+				program_number--;
+				if(program_number==0)program_number=1;	
+				tmp_data=12;				
+		}
+		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_14, GPIO_PIN_RESET);*/
+///////////////////////////////////////////////////////////////////////////////////////////////////		
+//Scan Key group 8X - GPIOC10
+		/*
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_15, GPIO_PIN_SET);
+		osDelay(10);
+		//empty button
+		if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_0)==0){
+			osDelay(10);
+			while(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_0)==0);
+		}	
+		//empty button
+		if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_1)==0){
+			osDelay(10);
+			while(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_1)==0);		
+		}
+		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_15, GPIO_PIN_RESET);	
+		*/
+///////////////////////////////////////////////////////////////////////////////////////////////////				
+		//osDelay(1);
   }
 }
 /* USER CODE END Header_start_reserve_isr */
@@ -463,9 +866,10 @@ void start_reserve_isr(void const * argument)
 {
   for(;;)
   {
+		
     if(kiemtra_ctht==1){
 		while(EEPROM24XX_IsConnected()==0)HAL_Delay(100);	
-		EEPROM24XX_Load(0,data_load,15);
+		EEPROM24XX_Load((program_number-1)*16,data_load,15);
 		//Thoi gian setup
 		tg_hut=data_load[0]*100+data_load[1]*10+data_load[2];
 		tg_nito=data_load[3]*100+data_load[4]*10+data_load[5];
@@ -476,7 +880,7 @@ void start_reserve_isr(void const * argument)
 		timer_counter=0;
 		data_number=0;
 		count_en=1;
-		buffer[0]=11;
+		buffer[0]=11;buffer[1]=10;buffer[2]=10;buffer[3]=10;
 		while(tg_hut!=timer_counter);
 		
 		//Chay hut nito
@@ -504,7 +908,7 @@ void start_reserve_isr(void const * argument)
 		while(tg_xa!=timer_counter);
 		kiemtra_ctht=0;
 		count_en=0;
-		buffer[0]=29;buffer[1]=30;buffer[2]=25;buffer[3]=26;buffer[4]=11;buffer[5]=11;buffer[6]=11;buffer[7]=11;
+		buffer[0]=29;buffer[1]=30;buffer[2]=25;buffer[3]=26;buffer[4]=10;buffer[5]=10;buffer[6]=10;buffer[7]=10;
 		}
 		osDelay(1);  
 }
@@ -514,6 +918,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 	if (htim->Instance == TIM2) {
 		ScreenUpdate();
+		
   }
 	if (htim->Instance == TIM1) {
     HAL_IncTick();
@@ -521,8 +926,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	if (htim->Instance == TIM3) {
 		if(timer_counter>1000)timer_counter=0;
 		if(count_en==1)data_number=timer_counter;
-		timer_counter++;
-  }
+		timer_counter++;		
+		  }
 }
 void Error_Handler(void)
 {
@@ -533,26 +938,74 @@ void PrintNumber(uint16_t number)
 	if (number > 9999)number = 0;
 	// Convert integer to bcd digits
 	//buffer[0] = number / 1000;
-	buffer[1] = number % 1000 / 100;
-	if(buffer[1]==0)buffer[1]=10;
-	buffer[2] = number % 100 / 10;
-	buffer[3] = number % 10;
+	buffer[5] = number % 1000 / 100;
+	if(buffer[5]==0)buffer[5]=10;
+	buffer[6] = number % 100 / 10;
+	buffer[7] = number %10;
 }
 void ScreenUpdate(void)
 {
-	static uint8_t digit = 0;
-	if(digit==0){
-		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_11, GPIO_PIN_RESET);
-		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);	
-	}
-	else if(digit==1){HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);HAL_GPIO_WritePin(GPIOB, GPIO_PIN_9, GPIO_PIN_SET);}
-	else if(digit==2){HAL_GPIO_WritePin(GPIOB, GPIO_PIN_9, GPIO_PIN_RESET);HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, GPIO_PIN_SET);}
-	else if(digit==3){HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, GPIO_PIN_RESET);HAL_GPIO_WritePin(GPIOB, GPIO_PIN_11, GPIO_PIN_SET);}
-	if((digit==2)&&(count_en==0))GPIOA->ODR = (font[buffer[digit]]) & 0x00FF;
-	else if((digit==2)&&(count_en==1))GPIOA->ODR = (font[buffer[digit]]|0x80) & 0x00FF;
-	else GPIOA->ODR = (font[buffer[digit]]) & 0x00FF;	
+	GPIOA->ODR=0x01<<digit;
+	//GPIOC->ODR&=0x00ff;
+	//GPIOC->ODR|=0x01<<(digit+8);
+	if((digit==6)&&(count_en==0)){GPIOC->ODR &= 0xff00; GPIOC->ODR |=(font[buffer[digit]]) & 0x00FF;}
+	else if((digit==6)&&(count_en==1)){GPIOC->ODR &= 0xff00; GPIOC->ODR |=(font[buffer[digit]]|0x80) & 0x00FF;}
+	else {GPIOC->ODR &= 0xff00; GPIOC->ODR |=(font[buffer[digit]]) & 0x00FF;}
 	digit++;
 	if (digit > (SS_DIGIT-1))digit = 0;
+}
+void update_data(uint8_t mode){
+
+if(program_number==1){
+					data_store_1[mode]=data_number % 1000 / 100;
+					data_store_1[mode+1]=data_number % 100 / 10;
+					data_store_1[mode+2]=data_number % 10;
+				}
+				else if(program_number==2){
+					data_store_2[mode]=data_number % 1000 / 100;
+					data_store_2[mode+1]=data_number % 100 / 10;
+					data_store_2[mode+2]=data_number % 10;
+				}
+				else if(program_number==3){
+					data_store_3[mode]=data_number % 1000 / 100;
+					data_store_3[mode+1]=data_number % 100 / 10;
+					data_store_3[mode+2]=data_number % 10;
+				}
+				else if(program_number==4){
+					data_store_4[mode]=data_number % 1000 / 100;
+					data_store_4[mode+1]=data_number % 100 / 10;
+					data_store_4[mode+2]=data_number % 10;
+				}
+				else if(program_number==5){
+					data_store_5[mode]=data_number % 1000 / 100;
+					data_store_5[mode+1]=data_number % 100 / 10;
+					data_store_5[mode+2]=data_number % 10;
+				}
+				else if(program_number==6){
+					data_store_6[mode]=data_number % 1000 / 100;
+					data_store_6[mode+1]=data_number % 100 / 10;
+					data_store_6[mode+2]=data_number % 10;
+				}
+				else if(program_number==7){
+					data_store_7[mode]=data_number % 1000 / 100;
+					data_store_7[mode+1]=data_number % 100 / 10;
+					data_store_7[mode+2]=data_number % 10;
+				}
+				else if(program_number==8){
+					data_store_8[mode]=data_number % 1000 / 100;
+					data_store_8[mode+1]=data_number % 100 / 10;
+					data_store_8[mode+2]=data_number % 10;
+				}
+				else if(program_number==9){
+					data_store_9[mode]=data_number % 1000 / 100;
+					data_store_9[mode+1]=data_number % 100 / 10;
+					data_store_9[mode+2]=data_number % 10;
+				}
+				else if(program_number==10){
+					data_store_10[mode]=data_number % 1000 / 100;
+					data_store_10[mode+1]=data_number % 100 / 10;
+					data_store_10[mode+2]=data_number % 10;
+				}	
 }
 #ifdef  USE_FULL_ASSERT
 /**
