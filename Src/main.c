@@ -129,8 +129,8 @@ void TM_KEYPAD_Update(void);
 
 
 uint8_t KEYPAD_INT_Buttons[2][8] = {
-	{0x02, 0x03, 0x05, 'i', 0x04, 'o', 's', 0x07},
-	{0x01, 0x04, 0x0b, 'p', 0x0d, 'c', 0x0f, 'd'},
+	{0x02, 0x03, 0x05, 'i', 0x0a, 'o', 's', 0x07},
+	{0x01, 0x04, 0x0b, 'p', 0x0d, 'c', 'd', 0x08},
 };
 
 /* Private functions */
@@ -352,11 +352,11 @@ const uint8_t font[96] = {
 	0x21, /* * */
 	0x70, /* + */
 	0x10, /* , */
-	0x01, /* - */
+	0x40, /* - */
 	0x80, /* . */
 	0x52, /* / */
 };
-volatile uint8_t buffer[8]={29,30,25,26,10,10,10,10}, digit = 0, key_pad=0;
+volatile uint8_t buffer[8]={29,30,25,26,10,10,10,10}, digit = 0, key_pad=0, dot_en=0;
 volatile uint8_t kiemtra_ctht=0, count_en=0, program_number=1, program_en=0, mode_hut=0, mode_nito=0, mode_han=0, mode_lammat=0, mode_xa=0;  
 volatile uint16_t data_number=0, timer_counter=0, tg_hut=0, tg_nito=0, tg_han=0, tg_lammat=0, tg_xa=0;
 
@@ -705,21 +705,150 @@ void start_setup_isr(void const * argument)
   {
 		KeypadStatus = (TM_KEYPAD_Button_t) TM_KEYPAD_INT_Read();
 		if(KeypadStatus!=0xff)key_pad=KeypadStatus;
-		osDelay(100);
-///////////////////////////////////////////////////////////////////////////////////////////////////	
-//Scan Key group 4X - GPIOC11
-		/*
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_11, GPIO_PIN_SET);
-		//osDelay(1);
-		//increase button
-		if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_0)==0){
-			//osDelay(10);
-			while(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_0)==0)osDelay(10);
+		if(key_pad==0x0a){kiemtra_ctht=1, key_pad=0;}
+		if(kiemtra_ctht==0){
+//mode hut chan khong		
+		if(key_pad==0x01){
+			key_pad=0;
+			mode_hut=1;mode_han=0;mode_lammat=0;mode_nito=0;mode_xa=0;
+			if(program_en==1){
+				buffer[0]=11;buffer[1]=10;buffer[2]=10;buffer[3]=10;buffer[4]=10;
+				if(program_number==1){buffer[5]=data_store_1[0];buffer[6]=data_store_1[1];buffer[7]=data_store_1[2];}
+				else if(program_number==2){buffer[5]=data_store_2[0];buffer[6]=data_store_2[1];buffer[7]=data_store_2[2];}
+				else if(program_number==3){buffer[5]=data_store_3[0];buffer[6]=data_store_3[1];buffer[7]=data_store_3[2];}
+				else if(program_number==4){buffer[5]=data_store_4[0];buffer[6]=data_store_4[1];buffer[7]=data_store_4[2];}
+				else if(program_number==5){buffer[5]=data_store_5[0];buffer[6]=data_store_5[1];buffer[7]=data_store_5[2];}
+				else if(program_number==6){buffer[5]=data_store_6[0];buffer[6]=data_store_6[1];buffer[7]=data_store_6[2];}
+				else if(program_number==7){buffer[5]=data_store_7[0];buffer[6]=data_store_7[1];buffer[7]=data_store_7[2];}
+				else if(program_number==8){buffer[5]=data_store_8[0];buffer[6]=data_store_8[1];buffer[7]=data_store_8[2];}
+				else if(program_number==9){buffer[5]=data_store_9[0];buffer[6]=data_store_9[1];buffer[7]=data_store_9[2];}
+				else if(program_number==10){buffer[5]=data_store_10[0];buffer[6]=data_store_10[1];buffer[7]=data_store_10[2];}	
+				data_number=100*buffer[5]+10*buffer[6]+buffer[7];
+				dot_en=1;
+				PrintNumber(data_number);
+			}
+		}
+////////////////////////////////////////////////////////////////////////////////////////////
+//mode bom nito	
+		if(key_pad==0x02){
+			key_pad=0;
+			mode_hut=0;mode_han=0;mode_lammat=0;mode_nito=1;mode_xa=0;
+			if(program_en==1){
+				buffer[0]=12;buffer[1]=10;buffer[2]=10;buffer[3]=10;buffer[4]=10;
+				if(program_number==1){buffer[5]=data_store_1[3];buffer[6]=data_store_1[4];buffer[7]=data_store_1[5];}
+				else if(program_number==2){buffer[5]=data_store_2[3];buffer[6]=data_store_2[4];buffer[7]=data_store_2[5];}
+				else if(program_number==3){buffer[5]=data_store_3[3];buffer[6]=data_store_3[4];buffer[7]=data_store_3[5];}
+				else if(program_number==4){buffer[5]=data_store_4[3];buffer[6]=data_store_4[4];buffer[7]=data_store_4[5];}
+				else if(program_number==5){buffer[5]=data_store_5[3];buffer[6]=data_store_5[4];buffer[7]=data_store_5[5];}
+				else if(program_number==6){buffer[5]=data_store_6[3];buffer[6]=data_store_6[4];buffer[7]=data_store_6[5];}
+				else if(program_number==7){buffer[5]=data_store_7[3];buffer[6]=data_store_7[4];buffer[7]=data_store_7[5];}
+				else if(program_number==8){buffer[5]=data_store_8[3];buffer[6]=data_store_8[4];buffer[7]=data_store_8[5];}
+				else if(program_number==9){buffer[5]=data_store_9[3];buffer[6]=data_store_9[4];buffer[7]=data_store_9[5];}
+				else if(program_number==10){buffer[5]=data_store_10[3];buffer[6]=data_store_10[4];buffer[7]=data_store_10[5];}	
+				data_number=100*buffer[5]+10*buffer[6]+buffer[7];
+				dot_en=1;
+				PrintNumber(data_number);
+			}
+		}	
+//mode han	
+		if(key_pad==0x03){
+			key_pad=0;
+			mode_hut=0;mode_han=1;mode_lammat=0;mode_nito=0;mode_xa=0;
+			if(program_en==1){
+				buffer[0]=13;buffer[1]=10;buffer[2]=10;buffer[3]=10;buffer[4]=10;
+				if(program_number==1){buffer[5]=data_store_1[6];buffer[6]=data_store_1[7];buffer[7]=data_store_1[8];}
+				else if(program_number==2){buffer[5]=data_store_2[6];buffer[6]=data_store_2[7];buffer[7]=data_store_2[8];}
+				else if(program_number==3){buffer[5]=data_store_3[6];buffer[6]=data_store_3[7];buffer[7]=data_store_3[8];}
+				else if(program_number==4){buffer[5]=data_store_4[6];buffer[6]=data_store_4[7];buffer[7]=data_store_4[8];}
+				else if(program_number==5){buffer[5]=data_store_5[6];buffer[6]=data_store_5[7];buffer[7]=data_store_5[8];}
+				else if(program_number==6){buffer[5]=data_store_6[6];buffer[6]=data_store_6[7];buffer[7]=data_store_6[8];}
+				else if(program_number==7){buffer[5]=data_store_7[6];buffer[6]=data_store_7[7];buffer[7]=data_store_7[8];}
+				else if(program_number==8){buffer[5]=data_store_8[6];buffer[6]=data_store_8[7];buffer[7]=data_store_8[8];}
+				else if(program_number==9){buffer[5]=data_store_9[6];buffer[6]=data_store_9[7];buffer[7]=data_store_9[8];}
+				else if(program_number==10){buffer[5]=data_store_10[6];buffer[6]=data_store_10[7];buffer[7]=data_store_10[8];}	
+				data_number=100*buffer[5]+10*buffer[6]+buffer[7];
+				dot_en=1;
+				PrintNumber(data_number);
+			}
+		}
+//mode lam mat		
+		if(key_pad==0x04){
+			key_pad=0;
+			mode_hut=0;mode_han=0;mode_lammat=1;mode_nito=0;mode_xa=0;
+			if(program_en==1){
+				buffer[0]=14;buffer[1]=10;buffer[2]=10;buffer[3]=10;buffer[4]=10;
+				if(program_number==1){buffer[5]=data_store_1[9];buffer[6]=data_store_1[10];buffer[7]=data_store_1[11];}
+				else if(program_number==2){buffer[5]=data_store_2[9];buffer[6]=data_store_2[10];buffer[7]=data_store_2[11];}
+				else if(program_number==3){buffer[5]=data_store_3[9];buffer[6]=data_store_3[10];buffer[7]=data_store_3[11];}
+				else if(program_number==4){buffer[5]=data_store_4[9];buffer[6]=data_store_4[10];buffer[7]=data_store_4[11];}
+				else if(program_number==5){buffer[5]=data_store_5[9];buffer[6]=data_store_5[10];buffer[7]=data_store_5[11];}
+				else if(program_number==6){buffer[5]=data_store_6[9];buffer[6]=data_store_6[10];buffer[7]=data_store_6[11];}
+				else if(program_number==7){buffer[5]=data_store_7[9];buffer[6]=data_store_7[10];buffer[7]=data_store_7[11];}
+				else if(program_number==8){buffer[5]=data_store_8[9];buffer[6]=data_store_8[10];buffer[7]=data_store_8[11];}
+				else if(program_number==9){buffer[5]=data_store_9[9];buffer[6]=data_store_9[10];buffer[7]=data_store_9[11];}
+				else if(program_number==10){buffer[5]=data_store_10[9];buffer[6]=data_store_10[10];buffer[7]=data_store_10[11];}	
+				data_number=100*buffer[5]+10*buffer[6]+buffer[7];
+				dot_en=1;
+				PrintNumber(data_number);
+			}
+		}
+//mode xa	
+		if(key_pad==0x05){
+			key_pad=0;
+			mode_hut=0;mode_han=0;mode_lammat=0;mode_nito=0;mode_xa=1;
+			if(program_en==1){
+				buffer[0]=15;buffer[1]=10;buffer[2]=10;buffer[3]=10;buffer[4]=10;
+				if(program_number==1){buffer[5]=data_store_1[12];buffer[6]=data_store_1[13];buffer[7]=data_store_1[14];}
+				else if(program_number==2){buffer[5]=data_store_2[12];buffer[6]=data_store_2[13];buffer[7]=data_store_2[14];}
+				else if(program_number==3){buffer[5]=data_store_3[12];buffer[6]=data_store_3[13];buffer[7]=data_store_3[14];}
+				else if(program_number==4){buffer[5]=data_store_4[12];buffer[6]=data_store_4[13];buffer[7]=data_store_4[14];}
+				else if(program_number==5){buffer[5]=data_store_5[12];buffer[6]=data_store_5[13];buffer[7]=data_store_5[14];}
+				else if(program_number==6){buffer[5]=data_store_6[12];buffer[6]=data_store_6[13];buffer[7]=data_store_6[14];}
+				else if(program_number==7){buffer[5]=data_store_7[12];buffer[6]=data_store_7[13];buffer[7]=data_store_7[14];}
+				else if(program_number==8){buffer[5]=data_store_8[12];buffer[6]=data_store_8[13];buffer[7]=data_store_8[14];}
+				else if(program_number==9){buffer[5]=data_store_9[12];buffer[6]=data_store_9[13];buffer[7]=data_store_9[14];}
+				else if(program_number==10){buffer[5]=data_store_10[12];buffer[6]=data_store_10[13];buffer[7]=data_store_10[14];}	
+				data_number=100*buffer[5]+10*buffer[6]+buffer[7];
+				dot_en=1;
+				PrintNumber(data_number);
+			}
+		}	
+	}		
+		if(key_pad=='i'){
+			key_pad=0;
 			if(mode_hut==1){
 					data_number++;
+				  dot_en=1;
+					PrintNumber(data_number);
 					update_data(0);			
 			}
-			if(program_en==1){				
+			if(mode_nito==1){
+					data_number++;
+				  dot_en=1;
+					PrintNumber(data_number);
+					update_data(3);			
+			}
+			if(mode_han==1){
+					data_number++;
+				  dot_en=1;
+					PrintNumber(data_number);
+					update_data(6);			
+			}
+			if(mode_lammat==1){
+					data_number++;
+				  dot_en=1;
+					PrintNumber(data_number);
+					update_data(9);			
+			}
+			if(mode_xa==1){
+					data_number++;
+				  dot_en=1;
+					PrintNumber(data_number);
+					update_data(12);			
+			}
+			if(program_en==1&&mode_hut==0&&mode_han==0&&mode_xa==0&&mode_nito==0&&mode_lammat==0){	
+				program_number++;
+				if(program_number>10)program_number=10;				
 				if(program_number==1){buffer[0]=1;buffer[1]=93;}
 				else if(program_number==2){buffer[0]=2;buffer[1]=93;}
 				else if(program_number==3){buffer[0]=3;buffer[1]=93;}
@@ -730,16 +859,16 @@ void start_setup_isr(void const * argument)
 				else if(program_number==8){buffer[0]=8;buffer[1]=93;}
 				else if(program_number==9){buffer[0]=9;buffer[1]=93;}
 				else if(program_number==10){buffer[0]=1;buffer[1]=0;}		
-				buffer[2]=93;buffer[3]=93;buffer[4]=93;buffer[5]=93;buffer[6]=93;buffer[7]=93;
-				program_number++;
-				if(program_number>10)program_number=10;
-				tmp_data=7;
+				buffer[2]=93;buffer[3]=93;buffer[4]=93;buffer[5]=93;buffer[6]=93;buffer[7]=93;	
 			}
 		}	
-		//program button
-		if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_1)==0){
-			//osDelay(10);
-			while(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_1)==0)osDelay(10);	
+
+				
+
+///////////////////////end increase button//////////////////////////////////////////////////////
+//program button
+		if(key_pad=='p'){
+			key_pad=0;
 			program_en++;
 			if(program_en==2){
 				while(EEPROM24XX_IsConnected()==0)HAL_Delay(100);	
@@ -753,77 +882,13 @@ void start_setup_isr(void const * argument)
 				else if(program_number==8)EEPROM24XX_Save(0x70,data_store_8,15);
 				else if(program_number==9)EEPROM24XX_Save(0x80,data_store_9,15);
 				else if(program_number==10)EEPROM24XX_Save(0x90,data_store_10,15);
-				mode_hut=0;mode_han=0;mode_lammat=0;mode_nito=0;mode_xa=0;
 				program_en=0;
-				HAL_Delay(100);	
+				dot_en=0;
+				mode_hut=0;mode_han=0;mode_lammat=0;mode_nito=0;mode_xa=0;
+				buffer[0]=29;buffer[1]=30;buffer[2]=25;buffer[3]=26;buffer[4]=10;buffer[5]=10;buffer[6]=10;buffer[7]=10;
+				HAL_Delay(1000);	
 			}				
-			if(program_number==1){buffer[0]=12;buffer[1]=data_store_1[0];buffer[2]=data_store_1[1];buffer[3]=data_store_1[2];}
-				else if(program_number==2){buffer[0]=12;buffer[1]=data_store_2[0];buffer[2]=data_store_2[1];buffer[3]=data_store_2[2];}
-				else if(program_number==3){buffer[0]=12;buffer[1]=data_store_3[0];buffer[2]=data_store_3[1];buffer[3]=data_store_3[2];}
-				else if(program_number==4){buffer[0]=12;buffer[1]=data_store_4[0];buffer[2]=data_store_4[1];buffer[3]=data_store_4[2];}
-				else if(program_number==5){buffer[0]=12;buffer[1]=data_store_5[0];buffer[2]=data_store_5[1];buffer[3]=data_store_5[2];}
-				else if(program_number==6){buffer[0]=12;buffer[1]=data_store_6[0];buffer[2]=data_store_6[1];buffer[3]=data_store_6[2];}
-				else if(program_number==7){buffer[0]=12;buffer[1]=data_store_7[0];buffer[2]=data_store_7[1];buffer[3]=data_store_7[2];}
-				else if(program_number==8){buffer[0]=12;buffer[1]=data_store_8[0];buffer[2]=data_store_8[1];buffer[3]=data_store_8[2];}
-				else if(program_number==9){buffer[0]=12;buffer[1]=data_store_9[0];buffer[2]=data_store_9[1];buffer[3]=data_store_9[2];}
-				else if(program_number==10){buffer[0]=12;buffer[1]=data_store_10[0];buffer[2]=data_store_10[1];buffer[3]=data_store_10[2];}
-				data_number=buffer[1]*100+buffer[2]*10+buffer[3];
-				tmp_data=8;
-		}
-		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_11, GPIO_PIN_RESET);*/
-///////////////////////////////////////////////////////////////////////////////////////////////////		
-//Scan Key group 5X - GPIOC12
-/*
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_SET);
-		osDelay(10);
-		//empty button
-		if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_0)==0){
-			osDelay(10);
-			while(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_0)==0);
-		}	
-		//empty button
-		if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_1)==0){
-			osDelay(10);
-			while(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_1)==0);		
-		}
-		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);	
-		*/
-///////////////////////////////////////////////////////////////////////////////////////////////////		
-//Scan Key group 6X - GPIOC13
- /*   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
-		//osDelay(1);
-		//sensor off button
-		if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_0)==0){
-			//osDelay(10);
-			while(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_0)==0)osDelay(10);
-			tmp_data=9;
-		}	
-		//clear button
-		if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_1)==0){
-			//osDelay(10);
-			while(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_1)==0)osDelay(10);		
-			tmp_data=10;
-		}
-		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
-///////////////////////////////////////////////////////////////////////////////////////////////////		
-//Scan Key group 7X - GPIOC14
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_14, GPIO_PIN_SET);
-		//osDelay(1);
-		//on/off button
-		if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_0)==0){
-			//osDelay(10);
-			while(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_0)==0)osDelay(10);
-			tmp_data=11;
-		}	
-		//deacrease button
-		if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_1)==0){
-			//osDelay(10);
-			while(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_1)==0)osDelay(10);
-if(mode_hut==1){
-					data_number--;
-					update_data(0);
-			}
-			if(program_en==1){				
+				if(program_en==1){
 				if(program_number==1){buffer[0]=1;buffer[1]=93;}
 				else if(program_number==2){buffer[0]=2;buffer[1]=93;}
 				else if(program_number==3){buffer[0]=3;buffer[1]=93;}
@@ -834,39 +899,69 @@ if(mode_hut==1){
 				else if(program_number==8){buffer[0]=8;buffer[1]=93;}
 				else if(program_number==9){buffer[0]=9;buffer[1]=93;}
 				else if(program_number==10){buffer[0]=1;buffer[1]=0;}		
-				buffer[2]=93;buffer[3]=93;buffer[4]=93;buffer[5]=93;buffer[6]=93;buffer[7]=93;
+				buffer[2]=93;buffer[3]=93;buffer[4]=93;buffer[5]=93;buffer[6]=93;buffer[7]=93;					
+		}
+	}
+////////////////end program button///////////////////////////////////////////////////////////
+//decrease button	
+		if(key_pad=='d'){
+			key_pad=0;
+		if(mode_hut==1){
+					data_number--;
+				dot_en=1;
+					PrintNumber(data_number);
+					update_data(0);
+			}
+		if(mode_nito==1){
+					data_number--;
+					dot_en=1;
+					PrintNumber(data_number);
+					update_data(3);
+			}
+		if(mode_han==1){
+					data_number--;
+					dot_en=1;
+					PrintNumber(data_number);
+					update_data(6);
+			}
+		if(mode_lammat==1){
+					data_number--;
+					dot_en=1;
+					PrintNumber(data_number);
+					update_data(9);
+			}
+		if(mode_xa==1){
+					data_number--;
+					dot_en=1;
+					PrintNumber(data_number);
+					update_data(12);
+			}
+			if(program_en==1&&mode_hut==0&&mode_han==0&&mode_xa==0&&mode_nito==0&&mode_lammat==0){								
 				program_number--;
 				if(program_number==0)program_number=1;	
-				tmp_data=12;				
+				if(program_number==1){buffer[0]=1;buffer[1]=93;}
+				else if(program_number==2){buffer[0]=2;buffer[1]=93;}
+				else if(program_number==3){buffer[0]=3;buffer[1]=93;}
+				else if(program_number==4){buffer[0]=4;buffer[1]=93;}
+				else if(program_number==5){buffer[0]=5;buffer[1]=93;}
+				else if(program_number==6){buffer[0]=6;buffer[1]=93;}
+				else if(program_number==7){buffer[0]=7;buffer[1]=93;}
+				else if(program_number==8){buffer[0]=8;buffer[1]=93;}
+				else if(program_number==9){buffer[0]=9;buffer[1]=93;}
+				else if(program_number==10){buffer[0]=1;buffer[1]=0;}		
+				buffer[2]=93;buffer[3]=93;buffer[4]=93;buffer[5]=93;buffer[6]=93;buffer[7]=93;				
 		}
-		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_14, GPIO_PIN_RESET);*/
-///////////////////////////////////////////////////////////////////////////////////////////////////		
-//Scan Key group 8X - GPIOC10
-		/*
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_15, GPIO_PIN_SET);
-		osDelay(10);
-		//empty button
-		if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_0)==0){
-			osDelay(10);
-			while(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_0)==0);
-		}	
-		//empty button
-		if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_1)==0){
-			osDelay(10);
-			while(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_1)==0);		
-		}
-		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_15, GPIO_PIN_RESET);	
-		*/
-///////////////////////////////////////////////////////////////////////////////////////////////////				
-		//osDelay(1);
-  }
+	}
+////////end decrease button////////////////////////////////////////////////////////////////////////				
+		osDelay(150);
+	}
+///////////////////////////////////////////////////////////////////////////////////////////////////					
 }
 /* USER CODE END Header_start_reserve_isr */
 void start_reserve_isr(void const * argument)
 {
   for(;;)
   {
-		
     if(kiemtra_ctht==1){
 		while(EEPROM24XX_IsConnected()==0)HAL_Delay(100);	
 		EEPROM24XX_Load((program_number-1)*16,data_load,15);
@@ -880,6 +975,7 @@ void start_reserve_isr(void const * argument)
 		timer_counter=0;
 		data_number=0;
 		count_en=1;
+		dot_en=1;
 		buffer[0]=11;buffer[1]=10;buffer[2]=10;buffer[3]=10;
 		while(tg_hut!=timer_counter);
 		
@@ -906,11 +1002,13 @@ void start_reserve_isr(void const * argument)
 		data_number=0;
 		buffer[0]=15;
 		while(tg_xa!=timer_counter);
-		kiemtra_ctht=0;
 		count_en=0;
+		dot_en=0;
 		buffer[0]=29;buffer[1]=30;buffer[2]=25;buffer[3]=26;buffer[4]=10;buffer[5]=10;buffer[6]=10;buffer[7]=10;
+		HAL_Delay(1000);
+		kiemtra_ctht=0;
 		}
-		osDelay(1);  
+		osDelay(10);  
 }
 }
 
@@ -948,8 +1046,7 @@ void ScreenUpdate(void)
 	GPIOA->ODR=0x01<<digit;
 	//GPIOC->ODR&=0x00ff;
 	//GPIOC->ODR|=0x01<<(digit+8);
-	if((digit==6)&&(count_en==0)){GPIOC->ODR &= 0xff00; GPIOC->ODR |=(font[buffer[digit]]) & 0x00FF;}
-	else if((digit==6)&&(count_en==1)){GPIOC->ODR &= 0xff00; GPIOC->ODR |=(font[buffer[digit]]|0x80) & 0x00FF;}
+	if((digit==6)&&(dot_en==1)){GPIOC->ODR &= 0xff00; GPIOC->ODR |=(font[buffer[digit]]|0x80) & 0x00FF;}
 	else {GPIOC->ODR &= 0xff00; GPIOC->ODR |=(font[buffer[digit]]) & 0x00FF;}
 	digit++;
 	if (digit > (SS_DIGIT-1))digit = 0;
