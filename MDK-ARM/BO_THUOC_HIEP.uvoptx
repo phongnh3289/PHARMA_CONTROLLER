@@ -120,9 +120,6 @@
         <SetRegEntry>
           <Number>0</Number>
           <Key>DLGUARM</Key>
-          <Name>ã7ìvÐ´œ
-ã7ìvÐ´œ
-</Name>
         </SetRegEntry>
         <SetRegEntry>
           <Number>0</Number>
@@ -291,6 +288,16 @@
           <count>27</count>
           <WinNumber>1</WinNumber>
           <ItemText>demox</ItemText>
+        </Ww>
+        <Ww>
+          <count>28</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>en_nito</ItemText>
+        </Ww>
+        <Ww>
+          <count>29</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>data_store_3</ItemText>
         </Ww>
       </WatchWindow1>
       <Tracepoint>
