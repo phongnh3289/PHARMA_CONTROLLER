@@ -700,6 +700,10 @@ static void MX_GPIO_Init(void)
   GPIO_InitStructA.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStructA.Speed = GPIO_SPEED_FREQ_MEDIUM;
 	HAL_GPIO_Init(GPIOA, &GPIO_InitStructA);
+	GPIO_InitStructA.Pin = 0x0100;
+  GPIO_InitStructA.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStructA.Speed = GPIO_SPEED_FREQ_MEDIUM;
+	HAL_GPIO_Init(GPIOA, &GPIO_InitStructA);
 	//Port B
 	//GPIO_InitStructB.Pin = 0x00ff;
   //GPIO_InitStructB.Mode = GPIO_MODE_OUTPUT_PP;
@@ -1035,6 +1039,7 @@ void start_reserve_isr(void const * argument)
 {
   for(;;)
   {
+		if(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_8)==0)kiemtra_ctht=1;
     if(kiemtra_ctht==1){
 		while(EEPROM24XX_IsConnected()==0)HAL_Delay(100);	
 		EEPROM24XX_Load((program_number-1)*16,data_load,15);
@@ -1102,6 +1107,7 @@ void start_reserve_isr(void const * argument)
 		kiemtra_ctht=0;
 		}
 		osDelay(10);  
+		HAL_Delay(500);
 }
 }
 
